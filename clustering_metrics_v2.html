@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clustering Evaluation Metrics v2 — Complete Interactive Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1a2236;--text:#e2e8f0;--text2:#94a3b8;--accent:#22d3ee;--accent2:#a78bfa;--accent3:#f472b6;--accent4:#34d399;--orange:#fb923c;--red:#f87171;--border:#1e293b;--gold:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.7;overflow-x:hidden}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;padding:2rem}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 600px 400px at 20% 30%,rgba(34,211,238,.08),transparent),radial-gradient(ellipse 500px 500px at 80% 70%,rgba(167,139,250,.06),transparent),radial-gradient(ellipse 400px 300px at 50% 50%,rgba(244,114,182,.04),transparent);pointer-events:none}
+.hero-label{font-family:'JetBrains Mono',monospace;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s ease forwards .2s}
+.hero h1{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(2.5rem,6vw,4.5rem);line-height:1.1;background:linear-gradient(135deg,#e2e8f0 0%,#22d3ee 40%,#f59e0b 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s ease forwards .4s}
+.hero p{font-size:1.15rem;color:var(--text2);max-width:640px;opacity:0;animation:fadeUp .8s ease forwards .6s}
+.hero .sub{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);margin-top:1rem;opacity:0;animation:fadeUp .8s ease forwards .8s}
+.scroll-hint{position:absolute;bottom:2rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text2);letter-spacing:.15em;opacity:0;animation:fadeUp .8s ease forwards 1s,pulse 2s ease-in-out infinite 1.8s}
+.scroll-hint::after{content:'↓';display:block;margin-top:.5rem;font-size:1.2rem;color:var(--accent)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.metric-nav{position:sticky;top:0;z-index:100;background:rgba(10,14,23,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;justify-content:center;gap:.4rem;padding:.8rem;flex-wrap:wrap}
+.metric-nav button{font-family:'JetBrains Mono',monospace;font-size:.72rem;padding:.45rem 1rem;border:1px solid var(--border);border-radius:999px;background:transparent;color:var(--text2);cursor:pointer;transition:all .3s;letter-spacing:.04em}
+.metric-nav button:hover{border-color:var(--accent);color:var(--text)}
+.metric-nav button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+.metric-nav button.ext{border-color:#2a1f3b}
+.metric-nav button.ext.active{background:var(--gold);border-color:var(--gold)}
+.metric-nav .sep{width:1px;height:20px;background:var(--border);align-self:center;margin:0 .3rem}
+.sec{display:none;max-width:1100px;margin:0 auto;padding:3rem 1.5rem 5rem}
+.sec.active{display:block;animation:fadeUp .5s ease}
+.sh{text-align:center;margin-bottom:3rem}
+.sh .tag{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;display:inline-block;padding:.3rem 1rem;border:1px solid;border-radius:999px;margin-bottom:1rem}
+.sh h2{font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(2rem,4vw,3rem);margin-bottom:.75rem}
+.sh p{color:var(--text2);font-size:1.05rem;max-width:650px;margin:0 auto}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:2rem;position:relative;overflow:hidden}
+.card h3{font-family:'JetBrains Mono',monospace;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.card h3 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.fbox{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.5rem 2rem;font-family:'JetBrains Mono',monospace;font-size:.92rem;text-align:center;margin:1.5rem 0;color:var(--accent);overflow-x:auto}
+.fbox .fl{font-size:.65rem;color:var(--text2);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.5rem}
+.cw{position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:1.5rem 0}
+canvas{display:block;width:100%}
+.ctrl{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;padding:.8rem 0}
+.ctrl label{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text2);letter-spacing:.08em;text-transform:uppercase}
+.ctrl input[type="range"]{-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border);outline:none;width:120px}
+.ctrl input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer}
+.btn{font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:.45rem 1rem;border:1px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);cursor:pointer;letter-spacing:.04em;transition:all .2s}
+.btn:hover,.btn.on{background:var(--accent);color:var(--bg)}
+.algo-sel{display:flex;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:2px;overflow:hidden}
+.algo-sel .abtn{font-family:'JetBrains Mono',monospace;font-size:.68rem;padding:.4rem .8rem;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap}
+.algo-sel .abtn:hover{color:var(--text)}
+.algo-sel .abtn.on{background:var(--accent);color:var(--bg);font-weight:600}
+.sr{display:flex;flex-wrap:wrap;gap:.8rem;margin:1rem 0}
+.sc{flex:1;min-width:110px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:.7rem .9rem;text-align:center}
+.sc .sl{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.15rem}
+.sc .sv{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700}
+.sc .sd{font-size:.6rem;color:var(--text2);margin-top:.1rem}
+.ins{background:linear-gradient(135deg,rgba(34,211,238,.05),rgba(167,139,250,.05));border:1px solid rgba(34,211,238,.12);border-radius:12px;padding:1rem 1.3rem;margin:1.2rem 0;font-size:.88rem}
+.step-list{list-style:none;padding:0}
+.step-list li{position:relative;padding-left:2.5rem;margin-bottom:1rem;font-size:.9rem}
+.step-list li::before{content:attr(data-step);position:absolute;left:0;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border-radius:50%;font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;background:var(--accent);color:var(--bg)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:768px){.g2{grid-template-columns:1fr}}
+.ct{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.84rem}
+.ct th{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);padding:.7rem .8rem;text-align:left;border-bottom:1px solid var(--border)}
+.ct td{padding:.7rem .8rem;border-bottom:1px solid var(--border)}
+.ct tr:hover td{background:rgba(34,211,238,.03)}
+.good{color:var(--accent4)}.bad{color:var(--red)}.neut{color:var(--orange)}
+.noise-bar{display:flex;align-items:center;gap:.5rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text2);margin:.5rem 0}
+.noise-bar .nb-fill{height:6px;border-radius:3px;background:var(--red);transition:width .3s}
+.noise-bar .nb-track{flex:1;height:6px;border-radius:3px;background:var(--bg3)}
+.seed-badge{font-family:'JetBrains Mono',monospace;font-size:.6rem;padding:.2rem .5rem;border-radius:4px;background:rgba(34,211,238,.1);color:var(--accent);margin-left:.5rem}
+.algo-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.62rem;padding:.2rem .6rem;border-radius:4px;background:rgba(34,211,238,.15);color:var(--accent);margin-left:.5rem;letter-spacing:.05em;vertical-align:middle}
+.note-tag{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--text2);font-style:italic;margin-top:.3rem}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:-1}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<section class="hero">
+  <div class="hero-label">Complete Interactive Guide — v2</div>
+  <h1>Clustering Evaluation<br>Metrics</h1>
+  <p>Master both <strong>Internal</strong> (no labels) and <strong>External</strong> (with labels) metrics — with algorithm switching, seeded reproducibility, and live score comparison.</p>
+  <div class="sub">Silhouette · CH · DB · Dunn &nbsp;|&nbsp; ARI · NMI · V-Measure · FM · Purity</div>
+  <div class="scroll-hint">SCROLL TO EXPLORE</div>
+</section>
+
+<nav class="metric-nav">
+  <button class="active" data-t="playground">Playground</button>
+  <div class="sep"></div>
+  <button data-t="silhouette">Silhouette</button>
+  <button data-t="calinski">CH Index</button>
+  <button data-t="davies">DB Index</button>
+  <button data-t="dunn">Dunn</button>
+  <div class="sep"></div>
+  <button class="ext" data-t="ari">ARI</button>
+  <button class="ext" data-t="nmi">NMI</button>
+  <button class="ext" data-t="vmeasure">V-Measure</button>
+  <button class="ext" data-t="fm">FM Index</button>
+  <button class="ext" data-t="purity">Purity</button>
+  <div class="sep"></div>
+  <button data-t="compare">Compare All</button>
+</nav>
+
+<!-- ================== PLAYGROUND ================== -->
+<section class="sec active" id="playground">
+  <div class="sh">
+    <div class="tag" style="border-color:var(--accent);color:var(--accent);">Interactive</div>
+    <h2>Algorithm Playground</h2>
+    <p>Switch algorithms, change datasets, and watch <strong>all metrics</strong> update live. Ground truth = generation cluster (inner fill). Predicted = algorithm output (outer ring).</p>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent)"></span> Algorithm <span class="algo-badge" id="pg-algo-label">K-MEANS++</span> <span class="seed-badge" id="pg-seed-badge">seed: 42</span></h3>
+    <div class="ctrl">
+      <div class="algo-sel" id="pg-algo">
+        <button class="abtn on" data-a="kmeans">K-Means++</button>
+        <button class="abtn" data-a="agglo-single">Agglo (Single)</button>
+        <button class="abtn" data-a="agglo-complete">Agglo (Complete)</button>
+        <button class="abtn" data-a="dbscan">DBSCAN</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <label>Dataset:</label>
+      <div class="algo-sel" id="pg-dataset">
+        <button class="abtn on" data-d="blobs">Blobs</button>
+        <button class="abtn" data-d="aniso">Anisotropic</button>
+        <button class="abtn" data-d="moons">Moons</button>
+        <button class="abtn" data-d="circles">Circles</button>
+        <button class="abtn" data-d="uniform">Uniform</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <label id="pg-k-lbl">k:</label>
+      <input type="range" id="pg-k" min="2" max="6" value="3">
+      <span id="pg-k-val" style="font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent);min-width:30px">3</span>
+      <label id="pg-eps-lbl" style="display:none;">ε:</label>
+      <input type="range" id="pg-eps" min="15" max="120" value="50" style="display:none;">
+      <span id="pg-eps-val" style="font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent);display:none;min-width:30px">50</span>
+      <label id="pg-minpts-lbl" style="display:none;">minPts:</label>
+      <input type="range" id="pg-minpts" min="2" max="8" value="3" style="display:none;">
+      <span id="pg-minpts-val" style="font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent);display:none;min-width:30px">3</span>
+      <label>Seed:</label>
+      <input type="range" id="pg-seed" min="1" max="999" value="42" style="width:80px">
+      <span id="pg-seed-v" style="font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--accent);min-width:30px">42</span>
+      <button class="btn" id="pg-regen">Regenerate</button>
+    </div>
+    <p style="color:var(--text2);font-size:.78rem;margin-bottom:.4rem;">Click = add point (assigned to nearest ground-truth cluster) · Drag = move · Right-click = delete</p>
+    <div class="cw"><canvas id="pgCanvas" height="440"></canvas></div>
+
+    <!-- NOISE BAR (visible for DBSCAN) -->
+    <div class="noise-bar" id="pg-noise-bar" style="display:none;">
+      <span>Noise:</span><span id="pg-noise-cnt">0</span>/<span id="pg-noise-total">0</span>
+      <div class="nb-track"><div class="nb-fill" id="pg-noise-fill" style="width:0%"></div></div>
+      <span id="pg-noise-pct">0%</span>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:1rem 0 .4rem;">Internal Metrics</div>
+    <div class="sr">
+      <div class="sc"><div class="sl">Silhouette</div><div class="sv" id="pg-sil" style="color:var(--accent)">—</div><div class="sd">↑ higher</div></div>
+      <div class="sc"><div class="sl">Calinski–Harabasz</div><div class="sv" id="pg-ch" style="color:var(--accent2)">—</div><div class="sd">↑ higher</div></div>
+      <div class="sc"><div class="sl">Davies–Bouldin</div><div class="sv" id="pg-db" style="color:var(--accent3)">—</div><div class="sd">↓ lower</div></div>
+      <div class="sc"><div class="sl">Dunn Index</div><div class="sv" id="pg-dunn" style="color:var(--accent4)">—</div><div class="sd">↑ higher</div></div>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:1rem 0 .4rem;">External Metrics <span style="color:var(--text2);font-size:.58rem;">(noise points treated as separate cluster)</span></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">ARI</div><div class="sv" id="pg-ari" style="color:var(--gold)">—</div><div class="sd">chance-corrected</div></div>
+      <div class="sc"><div class="sl">NMI</div><div class="sv" id="pg-nmi" style="color:var(--accent2)">—</div></div>
+      <div class="sc"><div class="sl">V-Measure</div><div class="sv" id="pg-vm" style="color:var(--accent2)">—</div></div>
+      <div class="sc"><div class="sl">Homogeneity</div><div class="sv" id="pg-homo" style="color:var(--accent3)">—</div><div class="sd">clusters pure?</div></div>
+      <div class="sc"><div class="sl">Completeness</div><div class="sv" id="pg-comp" style="color:var(--accent4)">—</div><div class="sd">classes whole?</div></div>
+      <div class="sc"><div class="sl">Fowlkes-Mallows</div><div class="sv" id="pg-fm" style="color:var(--accent)">—</div><div class="sd">√(P·R) pairs</div></div>
+      <div class="sc"><div class="sl">Purity</div><div class="sv" id="pg-pur" style="color:var(--red)">—</div><div class="sd">⚠ inflates</div></div>
+    </div>
+
+    <div class="ins" id="pg-ins">💡 Try switching datasets (Moons vs Blobs) and algorithms — see which metric/algorithm combos fail. DBSCAN noise points are included as their own cluster in external metrics to avoid inflating scores.</div>
+  </div>
+</section>
+
+<!-- ================== SILHOUETTE ================== -->
+<section class="sec" id="silhouette">
+  <div class="sh"><div class="tag" style="border-color:var(--accent);color:var(--accent);">Internal 1</div><h2>Silhouette Coefficient</h2><p>"Am I closer to my own cluster or to the nearest other cluster?"</p></div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent)"></span> How It Works</h3>
+    <ol class="step-list">
+      <li data-step="1"><strong>a(i)</strong> = mean distance to same-cluster points. (Cohesion)</li>
+      <li data-step="2"><strong>b(i)</strong> = mean distance to nearest other cluster. (Separation)</li>
+      <li data-step="3"><strong>s(i) = (b−a)/max(a,b)</strong> &nbsp;∈ [−1, +1]</li>
+    </ol>
+    <div class="fbox"><div class="fl">Per-sample Silhouette</div>s(i) = ( b(i) − a(i) ) / max( a(i), b(i) )</div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent)"></span> Hover to Inspect <span class="algo-badge" id="sil-algo-label">K-MEANS++</span></h3>
+    <div class="ctrl">
+      <div class="algo-sel" id="sil-algo"><button class="abtn on" data-a="kmeans">K-Means++</button><button class="abtn" data-a="agglo-complete">Agglo</button><button class="abtn" data-a="dbscan">DBSCAN</button></div>
+    </div>
+    <div class="cw"><canvas id="silCanvas" height="380"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">a(i)</div><div class="sv" id="sil-a" style="color:var(--accent)">—</div></div>
+      <div class="sc"><div class="sl">b(i)</div><div class="sv" id="sil-b" style="color:var(--accent3)">—</div></div>
+      <div class="sc"><div class="sl">s(i)</div><div class="sv" id="sil-si" style="color:var(--accent4)">—</div></div>
+      <div class="sc"><div class="sl">Global Mean</div><div class="sv" id="sil-mean" style="color:var(--accent2)">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== CH ================== -->
+<section class="sec" id="calinski">
+  <div class="sh"><div class="tag" style="border-color:var(--accent2);color:var(--accent2);">Internal 2</div><h2>Calinski–Harabasz Index</h2><p>Between-cluster vs within-cluster variance ratio.</p></div>
+  <div class="card">
+    <div class="fbox"><div class="fl">Calinski–Harabasz</div>CH(k) = [ Bₖ/(k−1) ] / [ Wₖ/(n−k) ] &nbsp;↑ higher = better</div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent2)"></span> Interactive: Bₖ vs Wₖ</h3>
+    <div class="ctrl">
+      <label>Spread:</label><input type="range" id="ch-spread" min="10" max="80" value="30">
+      <label>Separation:</label><input type="range" id="ch-sep" min="50" max="250" value="140">
+      <button class="btn" id="ch-regen">Regenerate</button>
+    </div>
+    <div class="cw"><canvas id="chCanvas" height="380"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">Bₖ</div><div class="sv" id="ch-bk" style="color:var(--accent4)">—</div></div>
+      <div class="sc"><div class="sl">Wₖ</div><div class="sv" id="ch-wk" style="color:var(--red)">—</div></div>
+      <div class="sc"><div class="sl">CH</div><div class="sv" id="ch-score" style="color:var(--accent2)">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== DB ================== -->
+<section class="sec" id="davies">
+  <div class="sh"><div class="tag" style="border-color:var(--accent3);color:var(--accent3);">Internal 3</div><h2>Davies–Bouldin Index</h2><p>Average worst-neighbour similarity ratio. ↓ Lower = better.</p></div>
+  <div class="card">
+    <div class="fbox"><div class="fl">Davies–Bouldin</div>DB = (1/k) Σ max_m [ (Sq+Sm) / ‖μq−μm‖ ]</div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent3)"></span> Worst Neighbour</h3>
+    <div class="ctrl">
+      <label>Spread:</label><input type="range" id="db-spread" min="10" max="80" value="30">
+      <label>Separation:</label><input type="range" id="db-sep" min="40" max="250" value="130">
+      <button class="btn" id="db-regen">Regenerate</button>
+    </div>
+    <div class="cw"><canvas id="dbCanvas" height="380"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">DB</div><div class="sv" id="db-score" style="color:var(--accent3)">—</div><div class="sd">↓ lower</div></div>
+      <div class="sc"><div class="sl">Worst Pair</div><div class="sv" id="db-pair" style="color:var(--red);font-size:1rem">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== DUNN ================== -->
+<section class="sec" id="dunn">
+  <div class="sh"><div class="tag" style="border-color:var(--accent4);color:var(--accent4);">Internal 4</div><h2>Dunn Index</h2><p>min gap / max diameter. ↑ Higher = better. Very fragile to outliers.</p></div>
+  <div class="card">
+    <div class="fbox"><div class="fl">Dunn Index</div>D = min δ(Cq,Cm) / max Δ(Cq)</div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent4)"></span> δ_min and Δ_max</h3>
+    <div class="ctrl">
+      <label>Spread:</label><input type="range" id="du-spread" min="10" max="80" value="25">
+      <label>Sep:</label><input type="range" id="du-sep" min="50" max="250" value="150">
+      <label>Outlier:</label><input type="range" id="du-outlier" min="0" max="100" value="0">
+      <button class="btn" id="du-regen">Regenerate</button>
+    </div>
+    <div class="cw"><canvas id="duCanvas" height="380"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">δ_min</div><div class="sv" id="du-dmin" style="color:var(--accent4)">—</div></div>
+      <div class="sc"><div class="sl">Δ_max</div><div class="sv" id="du-dmax" style="color:var(--orange)">—</div></div>
+      <div class="sc"><div class="sl">Dunn</div><div class="sv" id="du-score" style="color:var(--accent4)">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== ARI ================== -->
+<section class="sec" id="ari">
+  <div class="sh"><div class="tag" style="border-color:var(--gold);color:var(--gold);">External 1</div><h2>Adjusted Rand Index</h2><p>Pair agreements, chance-corrected. Gold standard.</p></div>
+  <div class="card">
+    <div class="fbox"><div class="fl">ARI</div>ARI = (Index − Expected) / (Max − Expected) &nbsp;∈ (−∞, 1]</div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--gold)"></span> Pair Counting</h3>
+    <p style="color:var(--text2);font-size:.8rem;margin-bottom:.5rem;">Click points to cycle cluster. <span style="color:var(--accent4)">TP</span> <span style="color:var(--red)">FP</span> <span style="color:var(--gold)">FN</span></p>
+    <div class="ctrl">
+      <button class="btn" id="ari-perfect">Perfect</button>
+      <button class="btn" id="ari-1err">1 Error</button>
+      <button class="btn" id="ari-random">Random</button>
+      <button class="btn on" id="ari-tp">TP</button>
+      <button class="btn" id="ari-fp">FP</button>
+      <button class="btn" id="ari-fn">FN</button>
+    </div>
+    <div class="cw"><canvas id="ariCanvas" height="340"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">TP</div><div class="sv" id="ari-tpv" style="color:var(--accent4)">—</div></div>
+      <div class="sc"><div class="sl">FP</div><div class="sv" id="ari-fpv" style="color:var(--red)">—</div></div>
+      <div class="sc"><div class="sl">FN</div><div class="sv" id="ari-fnv" style="color:var(--gold)">—</div></div>
+      <div class="sc"><div class="sl">TN</div><div class="sv" id="ari-tnv" style="color:var(--text2)">—</div></div>
+      <div class="sc"><div class="sl">ARI</div><div class="sv" id="ari-score" style="color:var(--gold)">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== NMI ================== -->
+<section class="sec" id="nmi">
+  <div class="sh"><div class="tag" style="border-color:var(--accent2);color:var(--accent2);">External 2</div><h2>Normalized Mutual Information</h2><p>Shared information between true and predicted, normalized.</p></div>
+  <div class="card"><div class="fbox"><div class="fl">NMI</div>NMI = 2·I(U;V) / [H(U)+H(V)] &nbsp;∈ [0,1]</div><div class="ins">⚠️ Inflates with large k. Use AMI for fair comparison across different k values.</div></div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent2)"></span> Entropy Bars</h3>
+    <div class="ctrl">
+      <button class="btn" id="nmi-perfect">Perfect</button><button class="btn" id="nmi-partial">Partial</button><button class="btn" id="nmi-random">Random</button><button class="btn" id="nmi-oversplit">Over-split</button>
+    </div>
+    <div class="cw"><canvas id="nmiCanvas" height="280"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">H(U)</div><div class="sv" id="nmi-hu" style="color:var(--accent)">—</div></div>
+      <div class="sc"><div class="sl">H(V)</div><div class="sv" id="nmi-hv" style="color:var(--gold)">—</div></div>
+      <div class="sc"><div class="sl">I(U;V)</div><div class="sv" id="nmi-mi" style="color:var(--accent2)">—</div></div>
+      <div class="sc"><div class="sl">NMI</div><div class="sv" id="nmi-score" style="color:var(--accent2)">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== V-MEASURE ================== -->
+<section class="sec" id="vmeasure">
+  <div class="sh"><div class="tag" style="border-color:var(--accent3);color:var(--accent3);">External 3</div><h2>V-Measure</h2><p>Homogeneity (purity) + Completeness (coverage) → harmonic mean.</p></div>
+  <div class="card">
+    <div class="g2">
+      <div style="background:var(--bg3);border-radius:12px;padding:1.2rem;border-left:3px solid var(--accent3);"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent3);margin-bottom:.3rem;">HOMOGENEITY h</div><p style="font-size:.86rem;">Clusters pure? h = 1 − H(U|V)/H(U)</p></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:1.2rem;border-left:3px solid var(--accent4);"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent4);margin-bottom:.3rem;">COMPLETENESS c</div><p style="font-size:.86rem;">Classes whole? c = 1 − H(V|U)/H(V)</p></div>
+    </div>
+    <div class="fbox"><div class="fl">V-Measure</div>V = 2·h·c / (h+c)</div>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent3)"></span> Diagnose Failures</h3>
+    <div class="ctrl"><button class="btn" id="vm-perfect">Perfect</button><button class="btn" id="vm-oversplit">Over-split</button><button class="btn" id="vm-overmerge">Over-merge</button><button class="btn" id="vm-mixed">Mixed</button></div>
+    <div class="cw"><canvas id="vmCanvas" height="260"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">Homogeneity</div><div class="sv" id="vm-h" style="color:var(--accent3)">—</div></div>
+      <div class="sc"><div class="sl">Completeness</div><div class="sv" id="vm-c" style="color:var(--accent4)">—</div></div>
+      <div class="sc"><div class="sl">V-Measure</div><div class="sv" id="vm-v" style="color:var(--accent2)">—</div></div>
+    </div>
+    <div class="ins" id="vm-ins">💡 High h, low c = over-splitting. Low h, high c = over-merging.</div>
+  </div>
+</section>
+
+<!-- ================== FM ================== -->
+<section class="sec" id="fm">
+  <div class="sh"><div class="tag" style="border-color:var(--accent);color:var(--accent);">External 4</div><h2>Fowlkes-Mallows Index</h2><p>√(Pair-Precision × Pair-Recall)</p></div>
+  <div class="card">
+    <div class="g2">
+      <div style="background:var(--bg3);border-radius:12px;padding:1.2rem;border-left:3px solid var(--accent4);"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent4);margin-bottom:.3rem;">PAIR PRECISION</div><p style="font-size:.86rem;">P = TP/(TP+FP)</p></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:1.2rem;border-left:3px solid var(--accent2);"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--accent2);margin-bottom:.3rem;">PAIR RECALL</div><p style="font-size:.86rem;">R = TP/(TP+FN)</p></div>
+    </div>
+    <div class="fbox"><div class="fl">Fowlkes-Mallows</div>FM = √(P × R) ∈ [0,1]</div>
+    <div class="ins">💡 Low P → impure (merging). Low R → fragmented (splitting).</div>
+  </div>
+</section>
+
+<!-- ================== PURITY ================== -->
+<section class="sec" id="purity">
+  <div class="sh"><div class="tag" style="border-color:var(--red);color:var(--red);">External 5</div><h2>Purity</h2><p>Simplest — and most dangerous alone.</p></div>
+  <div class="card"><div class="fbox"><div class="fl">Purity</div>Purity = (1/n) Σ max_class |Uᵢ ∩ Vⱼ| &nbsp;⚠ monotonically ↑ with k</div></div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--red)"></span> Watch Purity Lie</h3>
+    <div class="ctrl"><label>k:</label><input type="range" id="pur-k" min="2" max="12" value="3" style="width:160px"><span id="pur-kv" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--gold)">k=3</span></div>
+    <div class="cw"><canvas id="purCanvas" height="280"></canvas></div>
+    <div class="sr">
+      <div class="sc"><div class="sl">Purity</div><div class="sv" id="pur-score" style="color:var(--red)">—</div></div>
+      <div class="sc"><div class="sl">ARI</div><div class="sv" id="pur-ari" style="color:var(--gold)">—</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================== COMPARE ================== -->
+<section class="sec" id="compare">
+  <div class="sh"><div class="tag" style="border-color:var(--orange);color:var(--orange);">Summary</div><h2>Complete Comparison</h2></div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--accent)"></span> Internal</h3>
+    <table class="ct"><thead><tr><th>Metric</th><th>Dir</th><th>O()</th><th>Strengths</th><th>Weaknesses</th></tr></thead><tbody>
+      <tr><td style="color:var(--accent);font-weight:600">Silhouette</td><td class="good">↑</td><td>n²</td><td>Per-sample, any algorithm</td><td>Slow, convex bias</td></tr>
+      <tr><td style="color:var(--accent2);font-weight:600">CH</td><td class="good">↑</td><td>nk</td><td>Very fast k-sweep</td><td>Centroid-biased</td></tr>
+      <tr><td style="color:var(--accent3);font-weight:600">DB</td><td class="bad">↓</td><td>nk+k²</td><td>Finds weakest boundary</td><td>Centroid-biased</td></tr>
+      <tr><td style="color:var(--accent4);font-weight:600">Dunn</td><td class="good">↑</td><td>n²</td><td>Non-convex OK</td><td>Fragile to outliers</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--gold)"></span> External</h3>
+    <table class="ct"><thead><tr><th>Metric</th><th>Range</th><th>Chance?</th><th>Symm?</th><th>Key</th></tr></thead><tbody>
+      <tr><td style="color:var(--gold);font-weight:600">ARI</td><td>[−∞,1]</td><td class="good">✅</td><td class="good">Y</td><td>Gold standard</td></tr>
+      <tr><td style="color:var(--accent2);font-weight:600">NMI</td><td>[0,1]</td><td class="bad">❌</td><td class="good">Y</td><td>Info-theoretic</td></tr>
+      <tr><td style="color:var(--accent3);font-weight:600">V-Measure</td><td>[0,1]</td><td class="bad">❌</td><td class="good">Y</td><td>h vs c diagnosis</td></tr>
+      <tr><td style="color:var(--accent);font-weight:600">FM</td><td>[0,1]</td><td class="bad">❌</td><td class="good">Y</td><td>Pair P/R</td></tr>
+      <tr><td style="color:var(--red);font-weight:600">Purity</td><td>[0,1]</td><td class="bad">❌</td><td class="bad">N</td><td>Sanity check only</td></tr>
+    </tbody></table>
+  </div>
+  <div class="card">
+    <h3><span class="dot" style="background:var(--orange)"></span> Workflow</h3>
+    <ol class="step-list">
+      <li data-step="1"><strong>No labels:</strong> CH sweep → Silhouette → DB weak boundaries.</li>
+      <li data-step="2"><strong>Labels:</strong> ARI primary → V-Measure (h,c) diagnostics → AMI if comparing k.</li>
+      <li data-step="3"><strong>Always test multiple algorithms</strong> on same data. Try non-convex datasets.</li>
+    </ol>
+  </div>
+</section>
+
+<script>
+// ===== SEEDED RNG (Mulberry32) =====
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+let RNG=mulberry32(42);
+function srand(s){RNG=mulberry32(s);}
+function rand(){return RNG();}
+function gaussRandS(){let u=0,v=0;while(!u)u=rand();while(!v)v=rand();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+const COLORS=['#22d3ee','#a78bfa','#f472b6','#34d399','#fb923c','#f87171','#84cc16','#e879f9'];
+function dist(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1]);}
+
+// ===== DATASET GENERATORS =====
+function genBlobs(cx,cy,w,h,seed){
+  srand(seed);
+  const sp=35,n=14;
+  const c1=genClusterS(cx-w*.25,cy-h*.15,sp,n),c2=genClusterS(cx+w*.25,cy,sp,n),c3=genClusterS(cx,cy+h*.25,sp-5,n-2);
+  return{points:[...c1,...c2,...c3],trueLabels:[...c1.map(()=>0),...c2.map(()=>1),...c3.map(()=>2)]};
+}
+function genAniso(cx,cy,w,h,seed){
+  srand(seed);const pts=[],tl=[];
+  for(let i=0;i<18;i++){const x=cx-w*.3+gaussRandS()*50,y=cy-h*.15+gaussRandS()*12+((x-cx+w*.3)*.3);pts.push([x,y]);tl.push(0);}
+  for(let i=0;i<18;i++){const x=cx+w*.1+gaussRandS()*50,y=cy+h*.15+gaussRandS()*12-((x-cx-w*.1)*.3);pts.push([x,y]);tl.push(1);}
+  return{points:pts,trueLabels:tl};
+}
+function genMoons(cx,cy,w,h,seed){
+  srand(seed);const pts=[],tl=[];const r=w*.2;
+  for(let i=0;i<22;i++){const a=Math.PI*rand();const nr=r+gaussRandS()*8;pts.push([cx-w*.05+Math.cos(a)*nr,cy-h*.05+Math.sin(a)*nr]);tl.push(0);}
+  for(let i=0;i<22;i++){const a=Math.PI+Math.PI*rand();const nr=r+gaussRandS()*8;pts.push([cx+w*.05+Math.cos(a)*nr,cy+h*.05+Math.sin(a)*nr]);tl.push(1);}
+  return{points:pts,trueLabels:tl};
+}
+function genCircles(cx,cy,w,h,seed){
+  srand(seed);const pts=[],tl=[];
+  for(let i=0;i<20;i++){const a=rand()*Math.PI*2,r=w*.08+gaussRandS()*5;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);tl.push(0);}
+  for(let i=0;i<24;i++){const a=rand()*Math.PI*2,r=w*.22+gaussRandS()*6;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);tl.push(1);}
+  return{points:pts,trueLabels:tl};
+}
+function genUniform(cx,cy,w,h,seed){
+  srand(seed);const pts=[],tl=[];
+  for(let i=0;i<40;i++){pts.push([cx-w*.35+rand()*w*.7,cy-h*.35+rand()*h*.7]);tl.push(0);}
+  return{points:pts,trueLabels:tl};
+}
+function genClusterS(cx,cy,sp,n){const pts=[];for(let i=0;i<n;i++){const a=rand()*Math.PI*2,r=Math.abs(gaussRandS())*sp;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);}return pts;}
+function genDataset(name,cx,cy,w,h,seed){
+  if(name==='blobs')return genBlobs(cx,cy,w,h,seed);
+  if(name==='aniso')return genAniso(cx,cy,w,h,seed);
+  if(name==='moons')return genMoons(cx,cy,w,h,seed);
+  if(name==='circles')return genCircles(cx,cy,w,h,seed);
+  if(name==='uniform')return genUniform(cx,cy,w,h,seed);
+  return genBlobs(cx,cy,w,h,seed);
+}
+
+// ===== CANVAS =====
+function setupCanvas(id){
+  const c=document.getElementById(id),dpr=window.devicePixelRatio||1;
+  if(!c.dataset.oh)c.dataset.oh=c.getAttribute('height')||c.getBoundingClientRect().height;
+  const rect=c.getBoundingClientRect(),w=rect.width,h=parseInt(c.dataset.oh);
+  c.width=w*dpr;c.height=h*dpr;c.style.height=h+'px';
+  const ctx=c.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.scale(dpr,dpr);return{canvas:c,ctx,w,h};
+}
+function drawPt(ctx,x,y,col,r=5,a=1){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=a;ctx.fill();ctx.globalAlpha=1;}
+function drawPtDual(ctx,x,y,iCol,oCol,r=6){ctx.beginPath();ctx.arc(x,y,r+2.5,0,Math.PI*2);ctx.strokeStyle=oCol;ctx.lineWidth=2.5;ctx.stroke();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=iCol;ctx.fill();}
+function drawCentroid(ctx,x,y,col){ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();}
+function drawLine(ctx,x1,y1,x2,y2,col,dash=[],w=1,a=1){ctx.beginPath();ctx.setLineDash(dash);ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.globalAlpha=a;ctx.stroke();ctx.globalAlpha=1;ctx.setLineDash([]);}
+function drawGrid(ctx,w,h){ctx.strokeStyle='rgba(255,255,255,.03)';ctx.lineWidth=1;for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}}
+
+// ===== CLUSTERING ALGORITHMS =====
+// FIX: k-means++ initialization with seeded RNG
+function kmeanspp(pts,k,iter=25){
+  if(pts.length<k)return{labels:pts.map((_,i)=>i%k),centroids:pts.slice(0,k).map(p=>[...p])};
+  // k-means++ init
+  const centroids=[[...pts[Math.floor(rand()*pts.length)]]];
+  for(let c=1;c<k;c++){
+    const dists=pts.map(p=>{let mn=Infinity;centroids.forEach(ct=>{mn=Math.min(mn,dist(p,ct)**2);});return mn;});
+    const total=dists.reduce((a,b)=>a+b,0);
+    let r=rand()*total,cum=0;
+    for(let i=0;i<pts.length;i++){cum+=dists[i];if(cum>=r){centroids.push([...pts[i]]);break;}}
+    if(centroids.length<=c)centroids.push([...pts[Math.floor(rand()*pts.length)]]);
+  }
+  let labels=new Array(pts.length).fill(0);
+  for(let it=0;it<iter;it++){
+    labels=pts.map(p=>{let b=0,bd=Infinity;centroids.forEach((c,ci)=>{const d=dist(p,c);if(d<bd){bd=d;b=ci;}});return b;});
+    const nc=centroids.map(()=>[0,0]),cnt=new Array(k).fill(0);
+    pts.forEach((p,i)=>{nc[labels[i]][0]+=p[0];nc[labels[i]][1]+=p[1];cnt[labels[i]]++;});
+    for(let i=0;i<k;i++){if(cnt[i]){centroids[i]=[nc[i][0]/cnt[i],nc[i][1]/cnt[i]];}}
+  }
+  return{labels,centroids};
+}
+function agglomerative(pts,k,linkage='complete'){
+  const n=pts.length;if(n<=k)return{labels:pts.map((_,i)=>i),centroids:pts.map(p=>[...p])};
+  let clusters=pts.map((_,i)=>[i]);
+  const dm=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>dist(pts[i],pts[j])));
+  while(clusters.length>k){
+    let bI=0,bJ=1,bD=Infinity;
+    for(let i=0;i<clusters.length;i++)for(let j=i+1;j<clusters.length;j++){
+      let d;if(linkage==='single'){d=Infinity;for(const a of clusters[i])for(const b of clusters[j])d=Math.min(d,dm[a][b]);}
+      else{d=0;for(const a of clusters[i])for(const b of clusters[j])d=Math.max(d,dm[a][b]);}
+      if(d<bD){bD=d;bI=i;bJ=j;}
+    }
+    clusters[bI]=clusters[bI].concat(clusters[bJ]);clusters.splice(bJ,1);
+  }
+  const labels=new Array(n);
+  clusters.forEach((c,ci)=>c.forEach(idx=>labels[idx]=ci));
+  // NOTE: centroids are computed for visualization only — not used by the algorithm
+  const centroids=clusters.map(c=>{const xs=c.map(i=>pts[i][0]),ys=c.map(i=>pts[i][1]);return[xs.reduce((a,b)=>a+b)/c.length,ys.reduce((a,b)=>a+b)/c.length];});
+  return{labels,centroids};
+}
+function dbscan(pts,eps,minPts){
+  const n=pts.length,labels=new Array(n).fill(-1);let cid=0;const visited=new Set();
+  function rq(i){const nb=[];for(let j=0;j<n;j++)if(dist(pts[i],pts[j])<=eps)nb.push(j);return nb;}
+  for(let i=0;i<n;i++){
+    if(visited.has(i))continue;visited.add(i);const nb=rq(i);
+    if(nb.length<minPts)continue;
+    labels[i]=cid;const seed=[...nb];const inS=new Set(seed);
+    for(let si=0;si<seed.length;si++){const q=seed[si];
+      if(!visited.has(q)){visited.add(q);const nb2=rq(q);if(nb2.length>=minPts)nb2.forEach(x=>{if(!inS.has(x)){inS.add(x);seed.push(x);}});}
+      if(labels[q]<0)labels[q]=cid;
+    }cid++;
+  }
+  const uq=[...new Set(labels.filter(l=>l>=0))];
+  const centroids=uq.map(c=>{const m=pts.filter((_,i)=>labels[i]===c);return[m.reduce((s,p)=>s+p[0],0)/m.length,m.reduce((s,p)=>s+p[1],0)/m.length];});
+  return{labels,centroids};
+}
+function runAlgo(pts,algo,k,eps,minPts){
+  if(algo==='kmeans')return kmeanspp(pts,k);
+  if(algo==='agglo-single')return agglomerative(pts,k,'single');
+  if(algo==='agglo-complete')return agglomerative(pts,k,'complete');
+  if(algo==='dbscan')return dbscan(pts,eps,minPts);
+  return kmeanspp(pts,k);
+}
+
+// ===== METRIC FUNCTIONS =====
+function silhouetteScores(pts,labels){
+  const n=pts.length,cl=[...new Set(labels.filter(l=>l>=0))],k=cl.length;
+  if(k<2)return{perSample:pts.map(()=>({ai:0,bi:0,si:0})),mean:0};
+  const scores=[];
+  for(let i=0;i<n;i++){
+    if(labels[i]<0){scores.push({ai:0,bi:0,si:-1});continue;}
+    const ci=labels[i];
+    let aSum=0,aCnt=0;
+    for(let j=0;j<n;j++){if(j!==i&&labels[j]===ci){aSum+=dist(pts[i],pts[j]);aCnt++;}}
+    const ai=aCnt>0?aSum/aCnt:0;
+    let bi=Infinity;
+    cl.forEach(cj=>{if(cj===ci)return;let s=0,c=0;for(let j=0;j<n;j++){if(labels[j]===cj){s+=dist(pts[i],pts[j]);c++;}}if(c>0){const avg=s/c;if(avg<bi)bi=avg;}});
+    if(bi===Infinity)bi=0;
+    const si=Math.max(ai,bi)===0?0:(bi-ai)/Math.max(ai,bi);
+    scores.push({ai,bi,si});
+  }
+  // FIX: use index directly, not indexOf
+  let sum=0,cnt=0;
+  for(let i=0;i<n;i++){if(labels[i]>=0){sum+=scores[i].si;cnt++;}}
+  return{perSample:scores,mean:cnt?sum/cnt:0};
+}
+function calinskiHarabasz(pts,labels){
+  const cl=[...new Set(labels.filter(l=>l>=0))],k=cl.length;
+  const validIdx=[];for(let i=0;i<pts.length;i++)if(labels[i]>=0)validIdx.push(i);
+  const n=validIdx.length;if(k<2||n<=k)return{bk:0,wk:0,ch:0};
+  const mu=[0,0];validIdx.forEach(i=>{mu[0]+=pts[i][0];mu[1]+=pts[i][1];});mu[0]/=n;mu[1]/=n;
+  let bk=0,wk=0;
+  cl.forEach(c=>{const mi=[];for(let i=0;i<pts.length;i++)if(labels[i]===c)mi.push(i);
+    const nc=mi.length,mc=[0,0];mi.forEach(i=>{mc[0]+=pts[i][0];mc[1]+=pts[i][1];});mc[0]/=nc;mc[1]/=nc;
+    bk+=nc*((mc[0]-mu[0])**2+(mc[1]-mu[1])**2);
+    mi.forEach(i=>{wk+=(pts[i][0]-mc[0])**2+(pts[i][1]-mc[1])**2;});
+  });
+  return{bk,wk,ch:wk===0?Infinity:(bk/(k-1))/(wk/(n-k))};
+}
+function daviesBouldin(pts,labels){
+  const cl=[...new Set(labels.filter(l=>l>=0))],k=cl.length;if(k<2)return{db:0,worstPair:[0,0],centroids:[],scatters:[]};
+  const groups=cl.map(c=>{const idx=[];for(let i=0;i<pts.length;i++)if(labels[i]===c)idx.push(i);return idx;});
+  const centroids=groups.map(g=>{const n=g.length;return[g.reduce((s,i)=>s+pts[i][0],0)/n,g.reduce((s,i)=>s+pts[i][1],0)/n];});
+  const scatters=groups.map((g,gi)=>g.reduce((s,i)=>s+dist(pts[i],centroids[gi]),0)/g.length);
+  let db=0,gw=[0,1];
+  for(let i=0;i<k;i++){let mx=0,wj=(i+1)%k;for(let j=0;j<k;j++){if(i===j)continue;const m=dist(centroids[i],centroids[j]);if(!m)continue;const r=(scatters[i]+scatters[j])/m;if(r>mx){mx=r;wj=j;}}if(mx>db)gw=[i,wj];db+=mx;}
+  return{db:db/k,worstPair:gw,centroids,scatters};
+}
+function dunnIndex(pts,labels){
+  const cl=[...new Set(labels.filter(l=>l>=0))],k=cl.length;if(k<2)return{dmin:0,dmax:0,dunn:0,minPP:null,maxPP:null};
+  const groups=cl.map(c=>{const idx=[];for(let i=0;i<pts.length;i++)if(labels[i]===c)idx.push(i);return idx;});
+  let dmin=Infinity,minPP=null;
+  for(let i=0;i<k;i++)for(let j=i+1;j<k;j++)for(const a of groups[i])for(const b of groups[j]){const d=dist(pts[a],pts[b]);if(d<dmin){dmin=d;minPP=[a,b];}}
+  let dmax=0,maxPP=null;
+  for(let i=0;i<k;i++)for(let a=0;a<groups[i].length;a++)for(let b=a+1;b<groups[i].length;b++){const d=dist(pts[groups[i][a]],pts[groups[i][b]]);if(d>dmax){dmax=d;maxPP=[groups[i][a],groups[i][b]];}}
+  return{dmin,dmax,dunn:dmax===0?Infinity:dmin/dmax,minPP,maxPP};
+}
+// External
+function entropy(L){const n=L.length;if(!n)return 0;const c={};L.forEach(l=>{c[l]=(c[l]||0)+1;});let h=0;Object.values(c).forEach(v=>{const p=v/n;if(p>0)h-=p*Math.log(p);});return h;}
+function mi(T,P){const n=T.length;if(!n)return 0;const tc={},pc={},jt={};T.forEach((t,i)=>{const p=P[i];tc[t]=(tc[t]||0)+1;pc[p]=(pc[p]||0)+1;const k=t+','+p;jt[k]=(jt[k]||0)+1;});let m=0;Object.entries(jt).forEach(([k,nij])=>{const[t,p]=k.split(',');m+=nij/n*Math.log(n*nij/(tc[t]*pc[p]));});return m;}
+function nmiScore(T,P){const h1=entropy(T),h2=entropy(P),m=mi(T,P);return(h1+h2)===0?0:2*m/(h1+h2);}
+function homogeneity(T,P){const hu=entropy(T);if(hu===0)return 1;const n=T.length;const cl={};P.forEach((c,i)=>{if(!cl[c])cl[c]=[];cl[c].push(T[i]);});let hUV=0;Object.values(cl).forEach(m=>{hUV+=(m.length/n)*entropy(m);});return 1-hUV/hu;}
+function completeness(T,P){return homogeneity(P,T);}
+function vMeasure(T,P){const h=homogeneity(T,P),c=completeness(T,P);return(h+c)===0?0:2*h*c/(h+c);}
+function pairCounts(T,P){const n=T.length;let tp=0,fp=0,fn=0,tn=0;for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const sp=P[i]===P[j],st=T[i]===T[j];if(sp&&st)tp++;else if(sp&&!st)fp++;else if(!sp&&st)fn++;else tn++;}return{tp,fp,fn,tn};}
+function ariScore(T,P){const n=T.length;if(n<2)return 0;const{tp,fp,fn,tn}=pairCounts(T,P);const tot=tp+fp+fn+tn;if(!tot)return 0;const sA=tp+fp,sB=tp+fn;const exp=sA*sB/tot,mx=(sA+sB)/2;return mx===exp?(tp===sA&&sA>0?1:0):(tp-exp)/(mx-exp);}
+function fmScore(T,P){const{tp,fp,fn}=pairCounts(T,P);if(tp+fp===0||tp+fn===0)return 0;return Math.sqrt(tp/(tp+fp)*tp/(tp+fn));}
+function purityScore(T,P){const n=T.length;if(!n)return 0;const cl={};P.forEach((c,i)=>{if(!cl[c])cl[c]=[];cl[c].push(T[i]);});let tot=0;Object.values(cl).forEach(m=>{const cnt={};m.forEach(v=>{cnt[v]=(cnt[v]||0)+1;});tot+=Math.max(...Object.values(cnt));});return tot/n;}
+
+// FIX: noise-aware external eval — treat noise as its own cluster (label = -1 mapped to unique id)
+function prepExternal(trueL,predL){
+  // Map noise label -1 to a unique cluster id so it counts as a cluster (not filtered out)
+  const maxPred=Math.max(...predL.filter(l=>l>=0),-1);
+  const t=[],p=[];
+  for(let i=0;i<trueL.length;i++){
+    t.push(trueL[i]);
+    p.push(predL[i]>=0?predL[i]:maxPred+1); // noise → its own cluster
+  }
+  return{t,p};
+}
+
+// ===== PARTICLES =====
+(function(){const c=document.getElementById('particles'),ctx=c.getContext('2d');let W,H;const p=[];function rs(){W=c.width=innerWidth;H=c.height=innerHeight;}rs();addEventListener('resize',rs);for(let i=0;i<40;i++)p.push({x:Math.random()*2e3,y:Math.random()*2e3,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.2+.4});(function d(){ctx.clearRect(0,0,W,H);p.forEach(q=>{q.x+=q.vx;q.y+=q.vy;if(q.x<0)q.x=W;if(q.x>W)q.x=0;if(q.y<0)q.y=H;if(q.y>H)q.y=0;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fillStyle='rgba(34,211,238,.12)';ctx.fill();});requestAnimationFrame(d);})();})();
+
+// Nav
+document.querySelectorAll('.metric-nav button[data-t]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('.metric-nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.getElementById(b.dataset.t).classList.add('active');});});
+function bindAlgoSel(cid,cb){document.querySelectorAll(`#${cid} .abtn`).forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll(`#${cid} .abtn`).forEach(x=>x.classList.remove('on'));b.classList.add('on');cb(b.dataset.a||b.dataset.d);});});}
+
+// ============================================================
+//  MAIN PLAYGROUND
+// ============================================================
+(function(){
+  let points=[],trueLabels=[],predLabels=[],centroids=[];
+  let algo='kmeans',dataset='blobs',k=3,eps=50,minPts=3,seed=42,dragging=-1;
+  const NOISE_COL='#475569';
+  // All score element IDs for stale-reset
+  const ALL_IDS=['pg-sil','pg-ch','pg-db','pg-dunn','pg-ari','pg-nmi','pg-vm','pg-homo','pg-comp','pg-fm','pg-pur'];
+
+  function generateData(){
+    srand(seed);
+    const cw=500,ch=440; // approximate canvas size
+    const d=genDataset(dataset,cw/2,ch/2,cw,ch,seed);
+    points=d.points;trueLabels=d.trueLabels;
+  }
+
+  function recluster(){
+    if(points.length<2)return;
+    srand(seed+7919); // deterministic clustering too
+    const res=runAlgo(points,algo,k,eps,minPts);
+    predLabels=res.labels;centroids=res.centroids;
+  }
+
+  function showParams(){
+    const isDB=algo==='dbscan';
+    document.getElementById('pg-k').style.display=isDB?'none':'';
+    document.getElementById('pg-k-val').style.display=isDB?'none':'';
+    document.getElementById('pg-k-lbl').style.display=isDB?'none':'';
+    ['pg-eps','pg-eps-lbl','pg-eps-val','pg-minpts','pg-minpts-lbl','pg-minpts-val'].forEach(id=>{document.getElementById(id).style.display=isDB?'':'none';});
+    document.getElementById('pg-noise-bar').style.display=isDB?'flex':'none';
+  }
+
+  function clearScores(){ALL_IDS.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});}
+
+  function updateScores(){
+    // FIX: clear stale scores first
+    if(points.length<3){clearScores();return;}
+    const validClusters=[...new Set(predLabels.filter(l=>l>=0))];
+    if(validClusters.length<2){clearScores();return;}
+
+    const sil=silhouetteScores(points,predLabels);
+    const ch=calinskiHarabasz(points,predLabels);
+    const db=daviesBouldin(points,predLabels);
+    const du=dunnIndex(points,predLabels);
+    document.getElementById('pg-sil').textContent=sil.mean.toFixed(3);
+    document.getElementById('pg-ch').textContent=ch.ch===Infinity?'∞':ch.ch.toFixed(1);
+    document.getElementById('pg-db').textContent=db.db.toFixed(3);
+    document.getElementById('pg-dunn').textContent=du.dunn===Infinity?'∞':du.dunn.toFixed(3);
+
+    // FIX: noise-aware external eval — noise as its own cluster, not filtered
+    const{t:tE,p:pE}=prepExternal(trueLabels,predLabels);
+    if(tE.length>2&&new Set(pE).size>=2){
+      document.getElementById('pg-ari').textContent=ariScore(tE,pE).toFixed(3);
+      document.getElementById('pg-nmi').textContent=nmiScore(tE,pE).toFixed(3);
+      document.getElementById('pg-vm').textContent=vMeasure(tE,pE).toFixed(3);
+      document.getElementById('pg-homo').textContent=homogeneity(tE,pE).toFixed(3);
+      document.getElementById('pg-comp').textContent=completeness(tE,pE).toFixed(3);
+      document.getElementById('pg-fm').textContent=fmScore(tE,pE).toFixed(3);
+      document.getElementById('pg-pur').textContent=purityScore(tE,pE).toFixed(3);
+    } else { ALL_IDS.slice(4).forEach(id=>document.getElementById(id).textContent='—'); }
+
+    // Noise bar
+    const noiseCnt=predLabels.filter(l=>l<0).length;
+    document.getElementById('pg-noise-cnt').textContent=noiseCnt;
+    document.getElementById('pg-noise-total').textContent=points.length;
+    const pct=points.length?((noiseCnt/points.length)*100).toFixed(1):0;
+    document.getElementById('pg-noise-pct').textContent=pct+'%';
+    document.getElementById('pg-noise-fill').style.width=pct+'%';
+  }
+
+  function draw(){
+    const{ctx,w,h}=setupCanvas('pgCanvas');ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);
+    points.forEach((p,i)=>{
+      const pl=predLabels[i],tl=trueLabels[i];
+      if(pl<0)drawPt(ctx,p[0],p[1],NOISE_COL,4,.5);
+      else drawPtDual(ctx,p[0],p[1],COLORS[tl%COLORS.length],COLORS[pl%COLORS.length]);
+    });
+    // Centroids with note for non-centroid algorithms
+    const isAgglo=algo.startsWith('agglo');
+    centroids.forEach((c,i)=>drawCentroid(ctx,c[0],c[1],COLORS[i%COLORS.length]));
+    if(isAgglo){ctx.font='9px JetBrains Mono';ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillText('◎ = computed centroid (not used by algorithm)',10,h-10);}
+    else{ctx.font='600 10px JetBrains Mono';ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillText(algo.toUpperCase()+' | seed:'+seed,10,h-10);}
+    updateScores();
+  }
+
+  generateData();recluster();showParams();draw();
+
+  const cv=document.getElementById('pgCanvas');
+  cv.addEventListener('mousedown',e=>{
+    if(e.button===2)return;
+    const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+    dragging=points.findIndex(p=>dist(p,[mx,my])<14);
+    if(dragging===-1){
+      // FIX: assign true label based on nearest existing ground-truth centroid (spatial)
+      const classCentroids={};const classCounts={};
+      trueLabels.forEach((t,i)=>{if(!classCentroids[t])classCentroids[t]=[0,0];classCentroids[t][0]+=points[i][0];classCentroids[t][1]+=points[i][1];classCounts[t]=(classCounts[t]||0)+1;});
+      Object.keys(classCentroids).forEach(t=>{classCentroids[t][0]/=classCounts[t];classCentroids[t][1]/=classCounts[t];});
+      let bestClass=0,bestDist=Infinity;
+      Object.entries(classCentroids).forEach(([t,c])=>{const d=dist([mx,my],c);if(d<bestDist){bestDist=d;bestClass=+t;}});
+      points.push([mx,my]);trueLabels.push(bestClass);
+      recluster();draw();
+    }
+  });
+  cv.addEventListener('mousemove',e=>{if(dragging===-1)return;const r=cv.getBoundingClientRect();points[dragging]=[e.clientX-r.left,e.clientY-r.top];recluster();draw();});
+  cv.addEventListener('mouseup',()=>{dragging=-1;});
+  cv.addEventListener('mouseleave',()=>{dragging=-1;});
+  cv.addEventListener('contextmenu',e=>{e.preventDefault();const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;const idx=points.findIndex(p=>dist(p,[mx,my])<14);if(idx>=0){points.splice(idx,1);trueLabels.splice(idx,1);recluster();draw();}});
+
+  bindAlgoSel('pg-algo',a=>{algo=a;document.getElementById('pg-algo-label').textContent=a==='kmeans'?'K-MEANS++':a.toUpperCase();showParams();recluster();draw();});
+  bindAlgoSel('pg-dataset',d=>{dataset=d;generateData();recluster();draw();});
+  document.getElementById('pg-k').addEventListener('input',e=>{k=+e.target.value;document.getElementById('pg-k-val').textContent=k;recluster();draw();});
+  document.getElementById('pg-eps').addEventListener('input',e=>{eps=+e.target.value;document.getElementById('pg-eps-val').textContent=eps;recluster();draw();});
+  document.getElementById('pg-minpts').addEventListener('input',e=>{minPts=+e.target.value;document.getElementById('pg-minpts-val').textContent=minPts;recluster();draw();});
+  document.getElementById('pg-seed').addEventListener('input',e=>{seed=+e.target.value;document.getElementById('pg-seed-v').textContent=seed;document.getElementById('pg-seed-badge').textContent='seed: '+seed;generateData();recluster();draw();});
+  document.getElementById('pg-regen').addEventListener('click',()=>{generateData();recluster();draw();});
+})();
+
+// ============================================================
+//  SILHOUETTE
+// ============================================================
+(function(){
+  let points=[],labels=[],centroids=[],hovIdx=-1,algo='kmeans';
+  function init(){srand(77);points=[...genClusterS(120,180,38,16),...genClusterS(360,170,40,16),...genClusterS(240,340,32,13)];recluster();}
+  function recluster(){srand(77);const r=runAlgo(points,algo,3,45,3);labels=r.labels;centroids=r.centroids;}
+  function draw(){
+    const{ctx,w,h}=setupCanvas('silCanvas');ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);
+    const sil=silhouetteScores(points,labels);
+    if(hovIdx>=0&&labels[hovIdx]>=0){
+      const hp=points[hovIdx],hc=labels[hovIdx];
+      for(let j=0;j<points.length;j++)if(j!==hovIdx&&labels[j]===hc)drawLine(ctx,hp[0],hp[1],points[j][0],points[j][1],COLORS[hc%COLORS.length],[],1,.25);
+      const cl=[...new Set(labels.filter(l=>l>=0))].filter(c=>c!==hc);let nc=cl[0]||0,nd=Infinity;
+      cl.forEach(c=>{let s=0,cn=0;for(let j=0;j<points.length;j++)if(labels[j]===c){s+=dist(hp,points[j]);cn++;}const avg=s/cn;if(avg<nd){nd=avg;nc=c;}});
+      for(let j=0;j<points.length;j++)if(labels[j]===nc)drawLine(ctx,hp[0],hp[1],points[j][0],points[j][1],'#f472b6',[4,4],1,.3);
+    }
+    points.forEach((p,i)=>{
+      if(labels[i]<0){drawPt(ctx,p[0],p[1],'#475569',4,.5);return;}
+      drawPt(ctx,p[0],p[1],sil.perSample[i].si<0?'#f87171':COLORS[labels[i]%COLORS.length],i===hovIdx?10:6,i===hovIdx?1:.8);
+      if(i===hovIdx){ctx.font='600 11px JetBrains Mono';ctx.fillStyle='#fff';ctx.fillText('s='+sil.perSample[i].si.toFixed(2),p[0]+14,p[1]-8);}
+    });
+    centroids.forEach((c,i)=>drawCentroid(ctx,c[0],c[1],COLORS[i%COLORS.length]));
+    if(hovIdx>=0&&labels[hovIdx]>=0){
+      document.getElementById('sil-a').textContent=sil.perSample[hovIdx].ai.toFixed(2);
+      document.getElementById('sil-b').textContent=sil.perSample[hovIdx].bi.toFixed(2);
+      document.getElementById('sil-si').textContent=sil.perSample[hovIdx].si.toFixed(3);
+    }
+    document.getElementById('sil-mean').textContent=sil.mean.toFixed(3);
+  }
+  init();draw();
+  const cv=document.getElementById('silCanvas');
+  cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();hovIdx=points.findIndex(p=>dist(p,[e.clientX-r.left,e.clientY-r.top])<14);draw();});
+  // FIX: reset hover panel on mouseleave
+  cv.addEventListener('mouseleave',()=>{hovIdx=-1;document.getElementById('sil-a').textContent='—';document.getElementById('sil-b').textContent='—';document.getElementById('sil-si').textContent='—';draw();});
+  bindAlgoSel('sil-algo',a=>{algo=a;document.getElementById('sil-algo-label').textContent=a==='kmeans'?'K-MEANS++':a.toUpperCase();recluster();draw();});
+})();
+
+// ============================================================
+//  CH
+// ============================================================
+(function(){
+  let points=[],labels=[],centroids=[];
+  function gen(){
+    srand(99);const sp=+document.getElementById('ch-spread').value,se=+document.getElementById('ch-sep').value,cx=260,cy=200;
+    const a1=0,a2=Math.PI*2/3,a3=Math.PI*4/3;
+    points=[...genClusterS(cx+Math.cos(a1)*se,cy+Math.sin(a1)*se*.6,sp,18),...genClusterS(cx+Math.cos(a2)*se,cy+Math.sin(a2)*se*.6,sp,18),...genClusterS(cx+Math.cos(a3)*se,cy+Math.sin(a3)*se*.6,sp,18)];
+    srand(99);const r=kmeanspp(points,3);labels=r.labels;centroids=r.centroids;
+  }
+  function draw(){
+    const{ctx,w,h}=setupCanvas('chCanvas');ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);
+    const n=points.length,mu=[points.reduce((s,p)=>s+p[0],0)/n,points.reduce((s,p)=>s+p[1],0)/n];
+    points.forEach((p,i)=>drawLine(ctx,p[0],p[1],centroids[labels[i]][0],centroids[labels[i]][1],'rgba(248,113,113,.1)'));
+    centroids.forEach(c=>drawLine(ctx,c[0],c[1],mu[0],mu[1],'rgba(52,211,153,.5)',[6,4],2));
+    points.forEach((p,i)=>drawPt(ctx,p[0],p[1],COLORS[labels[i]%COLORS.length],5));
+    centroids.forEach((c,i)=>drawCentroid(ctx,c[0],c[1],COLORS[i%COLORS.length]));
+    drawPt(ctx,mu[0],mu[1],'#fff',6);
+    const ch=calinskiHarabasz(points,labels);
+    document.getElementById('ch-bk').textContent=ch.bk.toFixed(0);document.getElementById('ch-wk').textContent=ch.wk.toFixed(0);document.getElementById('ch-score').textContent=ch.ch===Infinity?'∞':ch.ch.toFixed(1);
+  }
+  gen();draw();
+  ['ch-spread','ch-sep'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{gen();draw();}));
+  document.getElementById('ch-regen').addEventListener('click',()=>{gen();draw();});
+})();
+
+// ============================================================
+//  DB
+// ============================================================
+(function(){
+  let points=[],labels=[],centroids=[];
+  function gen(){
+    srand(55);const sp=+document.getElementById('db-spread').value,se=+document.getElementById('db-sep').value,cx=260,cy=200;
+    points=[...genClusterS(cx-se,cy-se*.3,sp,16),...genClusterS(cx+se*.5,cy-se*.4,sp,16),...genClusterS(cx,cy+se*.5,sp,16)];
+    srand(55);const r=kmeanspp(points,3);labels=r.labels;centroids=r.centroids;
+  }
+  function draw(){
+    const{ctx,w,h}=setupCanvas('dbCanvas');ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);
+    const db=daviesBouldin(points,labels);
+    if(db.centroids.length>=2){const[wi,wj]=db.worstPair;drawLine(ctx,db.centroids[wi][0],db.centroids[wi][1],db.centroids[wj][0],db.centroids[wj][1],'#f87171',[8,5],3);}
+    points.forEach((p,i)=>drawPt(ctx,p[0],p[1],COLORS[labels[i]%COLORS.length],5));
+    centroids.forEach((c,i)=>drawCentroid(ctx,c[0],c[1],COLORS[i%COLORS.length]));
+    document.getElementById('db-score').textContent=db.db.toFixed(3);document.getElementById('db-pair').textContent='C'+(db.worstPair[0]+1)+'↔C'+(db.worstPair[1]+1);
+  }
+  gen();draw();
+  ['db-spread','db-sep'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{gen();draw();}));
+  document.getElementById('db-regen').addEventListener('click',()=>{gen();draw();});
+})();
+
+// ============================================================
+//  DUNN
+// ============================================================
+(function(){
+  let base=[],points=[],labels=[],centroids=[];
+  function gen(){
+    srand(33);const sp=+document.getElementById('du-spread').value,se=+document.getElementById('du-sep').value;
+    base=[...genClusterS(260-se,210,sp,14),...genClusterS(260+se,210,sp,14)];applyO();
+  }
+  function applyO(){
+    const ov=+document.getElementById('du-outlier').value,se=+document.getElementById('du-sep').value;
+    points=base.map(p=>[...p]);if(points.length&&ov>0)points[0][0]+=ov*se*.015;
+    srand(33);const r=kmeanspp(points,2);labels=r.labels;centroids=r.centroids;
+  }
+  function draw(){
+    const{ctx,w,h}=setupCanvas('duCanvas');ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);
+    const du=dunnIndex(points,labels);
+    if(du.maxPP){const[a,b]=du.maxPP;drawLine(ctx,points[a][0],points[a][1],points[b][0],points[b][1],'#fb923c',[],3,.8);const mx=(points[a][0]+points[b][0])/2,my=(points[a][1]+points[b][1])/2;ctx.font='11px JetBrains Mono';ctx.fillStyle='#fb923c';ctx.fillText('Δ='+du.dmax.toFixed(1),mx+8,my-8);}
+    if(du.minPP){const[a,b]=du.minPP;drawLine(ctx,points[a][0],points[a][1],points[b][0],points[b][1],'#34d399',[],3,.9);const mx=(points[a][0]+points[b][0])/2,my=(points[a][1]+points[b][1])/2;ctx.font='11px JetBrains Mono';ctx.fillStyle='#34d399';ctx.fillText('δ='+du.dmin.toFixed(1),mx+8,my+16);}
+    const ov=+document.getElementById('du-outlier').value;
+    points.forEach((p,i)=>{const isO=i===0&&ov>0;drawPt(ctx,p[0],p[1],isO?'#fb923c':COLORS[labels[i]%COLORS.length],isO?8:5);});
+    centroids.forEach((c,i)=>drawCentroid(ctx,c[0],c[1],COLORS[i%COLORS.length]));
+    document.getElementById('du-dmin').textContent=du.dmin.toFixed(2);document.getElementById('du-dmax').textContent=du.dmax.toFixed(2);document.getElementById('du-score').textContent=du.dunn===Infinity?'∞':du.dunn.toFixed(3);
+  }
+  gen();draw();
+  ['du-spread','du-sep'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{gen();draw();}));
+  document.getElementById('du-outlier').addEventListener('input',()=>{applyO();draw();});
+  document.getElementById('du-regen').addEventListener('click',()=>{gen();draw();});
+})();
+
+// ============================================================
+//  ARI
+// ============================================================
+(function(){
+  const pos=[[80,70],[150,120],[110,190],[340,60],[400,110],[370,180]];
+  const trueL=[0,0,0,1,1,1];let predL=[0,0,0,1,1,1];
+  let sTP=true,sFP=false,sFN=false;
+  function draw(){
+    const{ctx,w,h}=setupCanvas('ariCanvas');ctx.clearRect(0,0,w,h);drawGrid(ctx,w,h);
+    const n=pos.length;
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const sp=predL[i]===predL[j],st=trueL[i]===trueL[j];
+      if(sp&&st&&sTP)drawLine(ctx,pos[i][0],pos[i][1],pos[j][0],pos[j][1],'#10b981',.3,2);
+      if(sp&&!st&&sFP)drawLine(ctx,pos[i][0],pos[i][1],pos[j][0],pos[j][1],'#f87171',.4,2);
+      if(!sp&&st&&sFN)drawLine(ctx,pos[i][0],pos[i][1],pos[j][0],pos[j][1],'#f59e0b',.4,2);}
+    pos.forEach((p,i)=>{drawPtDual(ctx,p[0],p[1],COLORS[trueL[i]],COLORS[predL[i]],8);ctx.font='600 9px JetBrains Mono';ctx.fillStyle='#fff';ctx.fillText('T'+trueL[i]+' P'+predL[i],p[0]+15,p[1]-6);});
+    const{tp,fp,fn,tn}=pairCounts(trueL,predL);
+    document.getElementById('ari-tpv').textContent=tp;document.getElementById('ari-fpv').textContent=fp;document.getElementById('ari-fnv').textContent=fn;document.getElementById('ari-tnv').textContent=tn;
+    document.getElementById('ari-score').textContent=ariScore(trueL,predL).toFixed(3);
+  }
+  draw();
+  document.getElementById('ariCanvas').addEventListener('click',e=>{const r=e.target.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let c=-1,cd=Infinity;pos.forEach((p,i)=>{const d=dist(p,[mx,my]);if(d<cd){cd=d;c=i;}});if(cd<22&&c>=0){predL[c]=(predL[c]+1)%3;draw();}});
+  document.getElementById('ari-perfect').addEventListener('click',()=>{predL=[0,0,0,1,1,1];draw();});
+  document.getElementById('ari-1err').addEventListener('click',()=>{predL=[0,0,1,1,1,1];draw();});
+  document.getElementById('ari-random').addEventListener('click',()=>{predL=[0,1,0,1,0,1];draw();});
+  function tog(id,k){document.getElementById(id).addEventListener('click',()=>{if(k==='tp')sTP=!sTP;if(k==='fp')sFP=!sFP;if(k==='fn')sFN=!sFN;document.getElementById(id).classList.toggle('on');draw();});}
+  tog('ari-tp','tp');tog('ari-fp','fp');tog('ari-fn','fn');
+})();
+
+// ============================================================
+//  NMI
+// ============================================================
+(function(){
+  const trueL=[0,0,0,0,1,1,1,1,2,2,2,2];let predL=[...trueL];
+  function draw(){
+    const{ctx,w,h}=setupCanvas('nmiCanvas');ctx.clearRect(0,0,w,h);
+    const hu=entropy(trueL),hv=entropy(predL),m=mi(trueL,predL),maxH=Math.max(hu,hv,1.2);
+    const bW=60,gap=40,bY=h-40,mH=h-80,sX=(w-(bW*3+gap*2))/2;
+    function bar(x,v,col,lbl){const bh=maxH>0?(v/maxH)*mH:0;ctx.fillStyle=col;ctx.globalAlpha=.7;ctx.fillRect(x,bY-bh,bW,bh);ctx.globalAlpha=1;ctx.font='600 11px JetBrains Mono';ctx.fillStyle=col;ctx.textAlign='center';ctx.fillText(v.toFixed(3),x+bW/2,bY-bh-8);ctx.font='10px JetBrains Mono';ctx.fillStyle='#94a3b8';ctx.fillText(lbl,x+bW/2,bY+16);}
+    bar(sX,hu,'#3b82f6','H(U)');bar(sX+bW+gap,hv,'#f59e0b','H(V)');bar(sX+2*(bW+gap),m,'#a78bfa','I(U;V)');ctx.textAlign='left';
+    document.getElementById('nmi-hu').textContent=hu.toFixed(3);document.getElementById('nmi-hv').textContent=hv.toFixed(3);document.getElementById('nmi-mi').textContent=m.toFixed(3);document.getElementById('nmi-score').textContent=nmiScore(trueL,predL).toFixed(3);
+  }
+  draw();
+  document.getElementById('nmi-perfect').addEventListener('click',()=>{predL=[0,0,0,0,1,1,1,1,2,2,2,2];draw();});
+  document.getElementById('nmi-partial').addEventListener('click',()=>{predL=[0,0,1,0,1,1,1,2,2,2,2,0];draw();});
+  document.getElementById('nmi-random').addEventListener('click',()=>{predL=[0,1,2,0,1,2,0,1,2,0,1,2];draw();});
+  document.getElementById('nmi-oversplit').addEventListener('click',()=>{predL=trueL.map((_,i)=>i);draw();});
+})();
+
+// ============================================================
+//  V-MEASURE
+// ============================================================
+(function(){
+  const trueL=[0,0,0,0,1,1,1,1,2,2,2,2];let predL=[...trueL];
+  function draw(){
+    const{ctx,w,h}=setupCanvas('vmCanvas');ctx.clearRect(0,0,w,h);
+    const hV=homogeneity(trueL,predL),cV=completeness(trueL,predL),vV=vMeasure(trueL,predL);
+    const bW=80,gap=50,bY=h-45,mH=h-90,sX=(w-(bW*3+gap*2))/2;
+    function bar(x,v,col,lbl){const bh=v*mH;ctx.fillStyle=col;ctx.globalAlpha=.6;ctx.fillRect(x,bY-bh,bW,bh);ctx.globalAlpha=1;ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(x,bY-bh,bW,bh);ctx.font='700 20px JetBrains Mono';ctx.fillStyle=col;ctx.textAlign='center';ctx.fillText(v.toFixed(2),x+bW/2,bY-bh-12);ctx.font='10px JetBrains Mono';ctx.fillStyle='#94a3b8';ctx.fillText(lbl,x+bW/2,bY+18);}
+    bar(sX,hV,'#ec4899','Homogeneity');bar(sX+bW+gap,cV,'#10b981','Completeness');bar(sX+2*(bW+gap),vV,'#a78bfa','V-Measure');ctx.textAlign='left';
+    document.getElementById('vm-h').textContent=hV.toFixed(3);document.getElementById('vm-c').textContent=cV.toFixed(3);document.getElementById('vm-v').textContent=vV.toFixed(3);
+    const ins=document.getElementById('vm-ins');if(hV>cV+.15)ins.textContent='🔍 h > c → Over-splitting. Reduce k.';else if(cV>hV+.15)ins.textContent='🔍 c > h → Over-merging. Increase k.';else if(vV>.95)ins.textContent='✅ Excellent!';else ins.textContent='💡 h ≈ c → Mixed errors.';
+  }
+  draw();
+  document.getElementById('vm-perfect').addEventListener('click',()=>{predL=[0,0,0,0,1,1,1,1,2,2,2,2];draw();});
+  document.getElementById('vm-oversplit').addEventListener('click',()=>{predL=[0,1,0,1,2,3,2,3,4,5,4,5];draw();});
+  document.getElementById('vm-overmerge').addEventListener('click',()=>{predL=[0,0,0,0,0,0,0,0,1,1,1,1];draw();});
+  document.getElementById('vm-mixed').addEventListener('click',()=>{predL=[0,0,1,0,1,1,0,1,2,2,2,0];draw();});
+})();
+
+// ============================================================
+//  PURITY
+// ============================================================
+(function(){
+  const trueL=[0,0,0,0,0,1,1,1,1,1,2,2,2,2,2];let k=3;
+  function makeK(k){if(k<=3)return trueL.map(t=>t);const p=[];let cid=0;for(let c=0;c<3;c++){const sub=Math.ceil(k/3);for(let i=0;i<5;i++)p.push(cid+i%sub);cid+=sub;}return p;}
+  function draw(){
+    const{ctx,w,h}=setupCanvas('purCanvas');ctx.clearRect(0,0,w,h);
+    const bW=32,bY=h-45,mH=h-90,allK=[];
+    for(let kk=2;kk<=12;kk++){const p=makeK(kk);allK.push({k:kk,pur:purityScore(trueL,p),ari:ariScore(trueL,p)});}
+    const tW=allK.length*(bW*2+12),sX=Math.max(15,(w-tW)/2);
+    allK.forEach((d,i)=>{const x=sX+i*(bW*2+12),act=d.k===k;
+    const ph=Math.max(0,d.pur)*mH;ctx.fillStyle=act?'#f87171':'rgba(248,113,113,.2)';ctx.fillRect(x,bY-ph,bW,ph);
+    const ah=Math.max(0,d.ari)*mH;ctx.fillStyle=act?'#f59e0b':'rgba(245,158,11,.2)';ctx.fillRect(x+bW+2,bY-ah,bW,ah);
+    ctx.font=act?'700 10px JetBrains Mono':'9px JetBrains Mono';ctx.fillStyle=act?'#fff':'#64748b';ctx.textAlign='center';ctx.fillText('k='+d.k,x+bW+1,bY+14);
+    if(act){ctx.fillStyle='#f87171';ctx.fillText(d.pur.toFixed(2),x+bW/2,bY-ph-5);ctx.fillStyle='#f59e0b';ctx.fillText(d.ari.toFixed(2),x+bW+2+bW/2,bY-ah-5);}
+    });ctx.textAlign='left';ctx.font='10px JetBrains Mono';ctx.fillStyle='#f87171';ctx.fillRect(sX,8,12,12);ctx.fillText('Purity',sX+18,18);ctx.fillStyle='#f59e0b';ctx.fillRect(sX+80,8,12,12);ctx.fillText('ARI',sX+98,18);
+    const pl=makeK(k);document.getElementById('pur-score').textContent=purityScore(trueL,pl).toFixed(3);document.getElementById('pur-ari').textContent=ariScore(trueL,pl).toFixed(3);
+  }
+  draw();document.getElementById('pur-k').addEventListener('input',e=>{k=+e.target.value;document.getElementById('pur-kv').textContent='k='+k;draw();});
+})();
+</script>
+</body>
+</html>
